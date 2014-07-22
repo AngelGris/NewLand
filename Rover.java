@@ -4,19 +4,20 @@ import java.util.ArrayList;
 
 public class Rover {
 	// Energy when the rover leaves HQ
-	private final double MAX_ENERGY = 100;
+	public final double MAX_ENERGY = 100;
 	// Energy limit for the rover to start going back home
-	private final double MIN_ENERGY = 50;
+	public final double MIN_ENERGY = 50;
 
 	private int[] origin = new int[2];
 	private int[] position = new int[2];
 	private int[] destination = new int[2];
 	private Map map;
 	private ArrayList path;
-	private double energy = MAX_ENERGY;
+	private double energy = 0;
+	private double energy_waste = 0;
 	private boolean going_home = false;
 	private int trips = 0;
-	private int discovered = 0;
+	private int discovered = 1;
 	private int discovered_total = 0;
 
 
@@ -32,19 +33,17 @@ public class Rover {
 	}
 
 	public void move() {
+		int[] pos;
+
+		if (position[0] == origin[0] && position[1] == origin[1]) {
+			refuel();
+		}
+
+		if (!going_home && energy < MIN_ENERGY) {
+			goHome();
+		}
+
 		if (energy > 0) {
-			int[] pos;
-
-			if (!going_home && energy < MIN_ENERGY) {
-				goHome();
-			}
-
-			if (position[0] == destination[0] && position[1] == destination[1]) {
-				if (position[0] == origin[0] && position[1] == origin[1]) {
-					refuel();
-				}
-			}
-
 			if (path.size() == 0) {
 				path = map.getShortestPathToUndiscovered(position[0], position[1]);
 			}
@@ -73,6 +72,14 @@ public class Rover {
 		return Math.round(energy * 100.0) / 100.0;
 	}
 
+	public double getEnergyWaste() {
+		return Math.round(energy_waste * 100.0) / 100.0;
+	}
+
+	public double getEnergyWasteAverage() {
+		return Math.round((energy_waste / trips) * 100.0) / 100.0;
+	}
+
 	public int getTrips() {
 		return trips;
 	}
@@ -87,6 +94,10 @@ public class Rover {
 
 	public double getDiscoveredAverage() {
 		return Math.round((discovered_total * 1.0 / trips) * 100.0) / 100.0;
+	}
+
+	public boolean isAlive() {
+		return (energy > 0);
 	}
 
 	private void goHome() {
@@ -105,11 +116,15 @@ public class Rover {
 	}
 
 	private void refuel() {
-		//System.out.println(energy);
-		energy = MAX_ENERGY;
-		going_home = false;
-		trips++;
-		discovered = 0;
+		if (discovered > 0) {
+			energy_waste += energy;
+			energy = MAX_ENERGY;
+			going_home = false;
+			trips++;
+			discovered = 0;
+		} else {
+			energy = 0;
+		}
 	}
 
 	/*public int countUndiscovered() {

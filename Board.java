@@ -10,8 +10,13 @@ import javax.swing.JPanel;
 
 import java.util.ArrayList;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
+import java.io.IOException;
+
 public class Board extends JPanel implements Runnable {
-    private final int DELAY = 10;
+    private final int DELAY = 1;
 
     private int width;
     private int height;
@@ -47,11 +52,32 @@ public class Board extends JPanel implements Runnable {
         g.setColor(Color.black);
         g.drawString("Energy: " + Double.toString(rover.getEnergy()), 0, (height * zoom) + 10);
         g.drawString("Trips: " + Integer.toString(rover.getTrips()), 100, (height * zoom) + 10);
-        g.drawString("Discovered: " + Integer.toString(rover.getDiscovered()) + "( " + Double.toString(rover.getDiscoveredAverage()) +  ") - " +  Integer.toString(rover.getDiscoveredTotal()) + " (" + Double.toString(rover.getDiscoveredTotal() * 100.0 / (width * height)) + "%)", 200, (height * zoom) + 10);
+        g.drawString("Discovered: " + Integer.toString(rover.getDiscovered()) + " (" + Double.toString(rover.getDiscoveredAverage()) +  ") - " +  Integer.toString(rover.getDiscoveredTotal()) + " (" + Double.toString(rover.getDiscoveredTotal() * 100.0 / (width * height)) + "%)", 200, (height * zoom) + 10);
+        g.drawString("Wasted energy: " + Double.toString(rover.getEnergyWaste()) + " (" + Double.toString(rover.getEnergyWasteAverage()) + ")", 0, (height * zoom) + 25);
     }
 
     private void cycle() {
         rover.move();
+
+        if (!rover.isAlive()) {
+            try {
+                File file = new File("NewLand/", "stats-" + rover.MAX_ENERGY + "-" + rover.MIN_ENERGY + ".csv");
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
+
+                FileWriter fileWritter = new FileWriter(file,true);
+                BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+                bufferWritter.write(rover.getTrips() + "," + rover.getDiscoveredTotal() + "," + (rover.getDiscoveredTotal() * 100.0 / (width * height)) + "," + rover.getEnergyWaste() + "," + rover.getEnergyWasteAverage() + '\n');
+                bufferWritter.close();
+            } catch (IOException error) {
+                error.printStackTrace();
+            } catch (Exception error) {
+                error.printStackTrace();
+            } finally {
+                System.exit(0);
+            }
+        }
     }
 
     @Override
